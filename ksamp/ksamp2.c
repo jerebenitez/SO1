@@ -80,11 +80,13 @@ char* get_hostname () {
   return hostname;
 }
 
-char* get_filesystems () {
+
+int get_filesystems () {
   FILE* fp;
   char buffer[1024];
   size_t bytes_read;
-  char* sysfile;
+  int c = 0;
+  int sysfile = 0;
 
   fp = fopen("/proc/filesystems", "r");
   bytes_read = fread(buffer, 1, sizeof(buffer), fp);
@@ -95,7 +97,13 @@ char* get_filesystems () {
 
   buffer[bytes_read] = '\0';
 
-  sscanf(buffer, "nodev %s", sysfile);
+  while (buffer[c] != '\0') {
+    if (buffer[c] == '\n') {
+      sysfile++;
+      c++;
+    }
+    else  c++;
+  }
   return sysfile;
 }
 
@@ -178,9 +186,8 @@ int main(int argc, char *argv[]){
     /////////////////////////////////////////////////////
     printf("Kernel version: %s \n", get_kernel_version());
     /////////////////////////////////////////////////////
-    //    printf("Sysfile %s\n", get_filesystems());
-
     printf("CPU type%s \n", get_cpu_type());
     printf("CPU model%s \n", get_cpu_model());
+    printf("Allowed filesystems quantity: %i\n", get_filesystems());
     return 0;
 }
