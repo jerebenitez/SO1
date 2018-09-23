@@ -85,8 +85,8 @@ int main(int argc, char *argv[]){
 }
 
 void print_usage() {
-    printf("--stat \t-s :\tprint system stats\n");
-    printf("--interval-duration \t-I <seg> <min>:\tprint interval duration\n");
+    printf("--stat \t\t-s :\tprint system stats\n");
+    printf("--interval-duration -I <seg> <min>:\tprint interval duration\n");
 }
 
 void get_file_as_string(char* file_name, char** buffer) {
@@ -241,15 +241,18 @@ void get_s_options() {
 
 void get_interval_duration(int a, int b) {
     for (int i = 0; i < b; i += a) {
-        printf("Peticiones a disco: %d\n", b);
+        printf("Peticiones a disco: %ld\n", get_disk_requests());
         printf("Memoria disponible/total: %s/%s\n", get_available_mem(), get_total_mem());
         printf("Promedio de carga en el ùltimo minuto: %.2f\n", get_load_avg());
         
         printf("[Pausa de %d segundos]\n", a);
         sleep(a);
     }
-    
+    printf("Peticiones a disco: %ld\n", get_disk_requests());
+	printf("Memoria disponible/total: %s/%s\n", get_available_mem(), get_total_mem());
+	printf("Promedio de carga en el ùltimo minuto: %.2f\n", get_load_avg());
     printf("\n");
+    
     return;
 }
 
@@ -278,7 +281,7 @@ char* get_total_mem() {
         return "Can't find total memory.";
     
     match = strstr(match, ":");
-    match = strtok(match, "\n");    
+    match = strtok(match, "\n");
     return match;
 }
 
@@ -287,10 +290,27 @@ char* get_available_mem() {
 	char* match;
     
     get_file_as_string("/proc/meminfo", &buffer);
-    if (buffer == NULL) {
+    if (buffer == NULL)
         return "Can't read meminfo.";
-    }
     
-    sscanf(buffer, "MemAvailable: %s", match);  
+    match = strstr(buffer, "MemAvailable");
+    if (match == NULL)
+        return "Can't find total memory.";
+    
+    match = strstr(match, ":");
+    match = strtok(match, "\n");
     return match;
+}
+
+long get_disk_requests() {
+	char* buffer = NULL;
+	long sectors_read = -1, sectors_written = -1;
+    
+    get_file_as_string("/proc/diskstats", &buffer);
+    if (buffer == NULL)
+        return -1;
+    
+    sscanf(buffer, "%*d %*d sda %*d %*d %ld %*d %*d %*d %ld %*d %*d %*d %*d", &sectors_read, &sectors_written);
+        
+    return sectors_read + sectors_written;
 }

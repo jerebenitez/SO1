@@ -18,6 +18,7 @@ char* get_cpu_type(void);
 float get_load_avg();
 char* get_total_mem();
 char* get_available_mem();
+long get_disk_requests();
 
 void get_s_options(void);
 void get_interval_duration(int, int);
