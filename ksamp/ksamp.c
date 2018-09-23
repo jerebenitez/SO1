@@ -240,12 +240,57 @@ void get_s_options() {
 }
 
 void get_interval_duration(int a, int b) {
-    
-    printf("Peticiones a disco: %d\n", b);
-    printf("Memoria disponible/total: %d/%d\n", 1300, 1300);
-    printf("Promedio de carga en el ùltimo minuto: %d\n", 11);
-    printf("[Pausa de %d segundos]\n", a);
+    for (int i = 0; i < b; i += a) {
+        printf("Peticiones a disco: %d\n", b);
+        printf("Memoria disponible/total: %s/%s\n", get_available_mem(), get_total_mem());
+        printf("Promedio de carga en el ùltimo minuto: %.2f\n", get_load_avg());
+        
+        printf("[Pausa de %d segundos]\n", a);
+        sleep(a);
+    }
     
     printf("\n");
     return;
+}
+
+float get_load_avg() {
+    char* buffer = NULL;
+    
+    get_file_as_string("/proc/loadavg", &buffer);
+    if (buffer == NULL) {
+        return -1;
+    }
+    
+    return atof(strtok(buffer, " "));
+}
+
+char* get_total_mem() {
+	char* buffer = NULL;
+	char* match;
+    
+    get_file_as_string("/proc/meminfo", &buffer);
+    if (buffer == NULL) {
+        return "Can't read meminfo.";
+    }
+
+    match = strstr(buffer, "MemTotal");
+    if (match == NULL)
+        return "Can't find total memory.";
+    
+    match = strstr(match, ":");
+    match = strtok(match, "\n");    
+    return match;
+}
+
+char* get_available_mem() {
+	char* buffer = NULL;
+	char* match;
+    
+    get_file_as_string("/proc/meminfo", &buffer);
+    if (buffer == NULL) {
+        return "Can't read meminfo.";
+    }
+    
+    sscanf(buffer, "MemAvailable: %s", match);  
+    return match;
 }
