@@ -58,12 +58,28 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+void get_file_as_string(char* file_name, char** buffer) {
+    FILE* fp = fopen(file_name, "r");
+    if (fp == NULL)
+        return;
+    
+    size_t len;
+    ssize_t bytes_read = getdelim(buffer, &len, '\0', fp);
+    
+    fclose(fp);
+    
+    if (bytes_read == -1)
+        buffer = NULL;
+}
+
 char* get_kernel_version () {
     FILE* fp;
     char buffer[1024];
     size_t bytes_read;
     char* match;
-    char* kernel_version;
+    char kernel_version[100];
+    
+    memset(&kernel_version[0], 0, sizeof(kernel_version));
 
     fp = fopen("/proc/version", "r");
     bytes_read = fread(buffer, 1, sizeof(buffer), fp);
@@ -208,18 +224,15 @@ char* get_cpu_type() {
 }
 
 void get_s_options() {
-    FILE* fp;
-    char buffer[9999];
-    size_t bytes_read;
     char user[10], nice[10], sys[10], idle[10], ctxt[10],
          processes[10];
-
-    fp = fopen("/proc/stat", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
-    if(bytes_read == 0 || bytes_read == sizeof(buffer))
+    char* buffer = NULL;
+    
+    get_file_as_string("/proc/stat", &buffer);
+    if (buffer == NULL) {
+        printf("Could not load stats.");
         return;
-    buffer[bytes_read] = '\0';
+    }
 
     printf("STAT OPTIONS \n");
     // ESCANEO E IMPRESION CPU TIME

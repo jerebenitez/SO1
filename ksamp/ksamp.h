@@ -5,6 +5,8 @@ struct Uptime {
   float seconds;
 };
 
+void get_file_as_string(char*, char**);
+
 char* get_kernel_version(void);
 char* get_seconds_up(void);
 char* get_time(void);
