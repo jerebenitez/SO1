@@ -11,7 +11,7 @@ int main(int argc, char *argv[]){
     float tmp_seconds;
     int next_option;
     // Options flags
-    int stats = 0, interval_duration = 0;
+    int stats_flag = 0, int_flag = 0;
     
     const char* const short_opts = "sI:";
     const struct option long_opts [] = {
@@ -22,11 +22,11 @@ int main(int argc, char *argv[]){
     
     while ((next_option = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
         switch (next_option) {
-            case 'I':                
-                interval_duration = 1;
+            case 'I': ;
+                int_flag = 1;
                 break;
             case 's':
-                stats = 1;
+                stats_flag = 1;
                 break;
             case 'h':
             case '?':
@@ -36,13 +36,17 @@ int main(int argc, char *argv[]){
         }
     }
     
-    if (interval_duration + stats > 1) {
+    if (int_flag + stats_flag > 1) {
         print_usage();
         return 0;
-    } else if (interval_duration == 1) {
+    } else if (int_flag == 1) {
+        if (argc > 4) {
+            print_usage();
+            return 0;
+        }
+        get_interval_duration(atoi(argv[2]), atoi(argv[3]));
         get_s_options();
-        get_interval_duration(1, 1);
-    } else if (stats == 1) {
+    } else if (stats_flag == 1) {
         get_s_options();
     }
 
@@ -229,5 +233,12 @@ void get_s_options() {
 }
 
 void get_interval_duration(int a, int b) {
+    
+    printf("Peticiones a disco: %d\n", b);
+    printf("Memoria disponible/total: %d/%d\n", 1300, 1300);
+    printf("Promedio de carga en el ùltimo minuto: %d\n", 11);
+    printf("[Pausa de %d segundos]\n", a);
+    
+    printf("\n");
     return;
 }
