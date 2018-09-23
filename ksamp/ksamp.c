@@ -10,26 +10,41 @@
 int main(int argc, char *argv[]){
     float tmp_seconds;
     int next_option;
-    const char* const short_options = "s";  // OPCIONES CORTAS
-    const struct option long_options [] = {   // OPCIONES LARGAS,
-      {"stat", 0, NULL, 's'},
-      {NULL, 0, NULL, 0},
+    // Options flags
+    int stats = 0, interval_duration = 0;
+    
+    const char* const short_opts = "sI:";
+    const struct option long_opts [] = {
+      {"stat",              no_argument,       NULL, 's'},
+      {"interval-duration", required_argument, NULL, 'I'},
+      {0,                   0,                 0,    0},
     };
-    do {
-      next_option = getopt_long (argc, argv, short_options,
-                                 long_options, NULL);
-
+    
+    while ((next_option = getopt_long(argc, argv, short_opts, long_opts, NULL)) != -1) {
         switch (next_option) {
+            case 'I':                
+                interval_duration = 1;
+                break;
             case 's':
-                get_s_options();
+                stats = 1;
                 break;
+            case 'h':
             case '?':
-                break;
-            case -1:
-                break;
             default:
-                abort();
-        }} while (next_option != -1);
+                print_usage();
+                return 0;
+        }
+    }
+    
+    if (interval_duration + stats > 1) {
+        print_usage();
+        return 0;
+    } else if (interval_duration == 1) {
+        get_s_options();
+        get_interval_duration(1, 1);
+    } else if (stats == 1) {
+        get_s_options();
+    }
 
     struct Uptime ut = { //INSTANCIA UPTIME
         .seconds = 0,
@@ -58,6 +73,11 @@ int main(int argc, char *argv[]){
     return 0;
 }
 
+void print_usage() {
+    printf("--stat \t-s :\tprint system stats\n");
+    printf("--interval-duration \t-I <seg> <min>:\tprint interval duration\n");
+}
+
 void get_file_as_string(char* file_name, char** buffer) {
     FILE* fp = fopen(file_name, "r");
     if (fp == NULL)
@@ -75,9 +95,9 @@ void get_file_as_string(char* file_name, char** buffer) {
 char* get_kernel_version () {
     char* buffer = NULL;
     char* match;
-    char kernel_version[100];
+    char* kernel_version;
     
-    memset(&kernel_version[0], 0, sizeof(kernel_version));
+    //memset(&kernel_version[0], 0, sizeof(kernel_version));
     
     get_file_as_string("/proc/version", &buffer);
     if (buffer == NULL)
@@ -206,4 +226,8 @@ void get_s_options() {
     char* processes_tmp = strstr(buffer, "processes");
     sscanf(processes_tmp, "processes %s", processes);
     printf("Processes: %s\n\n", processes);
+}
+
+void get_interval_duration(int a, int b) {
+    return;
 }

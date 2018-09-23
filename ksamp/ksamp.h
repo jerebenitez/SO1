@@ -5,6 +5,7 @@ struct Uptime {
   float seconds;
 };
 
+void print_usage(void);
 void get_file_as_string(char*, char**);
 
 char* get_kernel_version(void);
@@ -14,4 +15,6 @@ char* get_hostname(void);
 int get_filesystems(void);
 char* get_cpu_model(void);
 char* get_cpu_type(void);
+
 void get_s_options(void);
+void get_interval_duration(int, int);
