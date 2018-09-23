@@ -8,37 +8,34 @@
 #include "ksamp.h"
 
 int main(int argc, char *argv[]){
+    float tmp_seconds;
+    int next_option;
+    const char* const short_options = "s";  // OPCIONES CORTAS
+    const struct option long_options [] = {   // OPCIONES LARGAS,
+      {"stat", 0, NULL, 's'},
+      {NULL, 0, NULL, 0},
+    };
+    do {
+      next_option = getopt_long (argc, argv, short_options,
+                                 long_options, NULL);
 
-  float tmp_seconds;
-  int next_option;
-  const char* const short_options = "s";  // OPCIONES CORTAS
-  const struct option long_options [] = {   // OPCIONES LARGAS,
-    {"stat", 0, NULL, 's'},
-    {NULL, 0, NULL, 0},
-  };
-  do {
-    next_option = getopt_long (argc, argv, short_options,
-       long_options, NULL);
-
-       switch (next_option) {
-          case 's':
-            get_s_options();
-            break;
-          case '?':
-            break;
-          case -1:
-            break;
-          default:
-            abort();
-        }
-  } while (next_option != -1);
-
+        switch (next_option) {
+            case 's':
+                get_s_options();
+                break;
+            case '?':
+                break;
+            case -1:
+                break;
+            default:
+                abort();
+        }} while (next_option != -1);
 
     struct Uptime ut = { //INSTANCIA UPTIME
-      .seconds = 0,
-      .days = 0,
-      .hours = 0,
-      .minutes = 0,
+        .seconds = 0,
+        .days = 0,
+        .hours = 0,
+        .minutes = 0,
     };
     // LECTURA DE SEGUNDOS (LEER get_seconds_up())
     tmp_seconds = atof(get_seconds_up()); // atof() - de char a float
@@ -47,8 +44,7 @@ int main(int argc, char *argv[]){
     ut.hours = tmp_seconds / 3600 - ut.days * 24;
     ut.minutes = tmp_seconds / 60 - ut.hours * 60;
     ut.seconds = tmp_seconds - ut.days * 86400 - ut.hours * 3600
-     - ut.minutes * 60;
-
+                - ut.minutes * 60;
 
     printf("Hostname: %s", get_hostname());
     printf("Kernel version: %s \n", get_kernel_version());
@@ -58,9 +54,6 @@ int main(int argc, char *argv[]){
     printf("CPU type%s \n", get_cpu_type());
     printf("CPU model%s \n", get_cpu_model());
     printf("Allowed filesystems quantity: %i\n", get_filesystems());
-
-
-
 
     return 0;
 }
@@ -77,87 +70,89 @@ char* get_kernel_version () {
     fclose(fp);
 
     if(bytes_read == 0 || bytes_read == sizeof(buffer))
-    	return 0;
+        return 0;
 
     buffer[bytes_read] = '\0';
 
     match = strstr(buffer, "Linux version");
 
     if (match == NULL)
-    		return 0;
+        return 0;
 
     sscanf(match, "Linux version %s", kernel_version);
     return kernel_version;
 }
 
 char* get_seconds_up() {
-  FILE* fp;
-  char buffer[1024];
-  size_t bytes_read;
-  char* seconds_up;
+    FILE* fp;
+    char buffer[1024];
+    size_t bytes_read;
+    char* seconds_up;
 
-  fp = fopen("/proc/uptime", "r");
-  bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-  fclose(fp);
+    fp = fopen("/proc/uptime", "r");
+    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
+    fclose(fp);
 
-  if(bytes_read == 0 || bytes_read == sizeof(buffer))
-    return 0;
+    if(bytes_read == 0 || bytes_read == sizeof(buffer))
+        return 0;
 
-  buffer[bytes_read] = '\0';
-
-  seconds_up = strtok(buffer, " ");
-  return seconds_up;
+    buffer[bytes_read] = '\0';
+    seconds_up = strtok(buffer, " ");
+    
+    return seconds_up;
 }
 
 char* get_time() {
-  time_t curtime;
-  time(&curtime);
-  return ctime(&curtime);
+    time_t curtime;
+    time(&curtime);
+    return ctime(&curtime);
 }
 
 char* get_hostname () {
-  FILE* fp;
-  char buffer[1024];
-  size_t bytes_read;
-  char* hostname;
+    FILE* fp;
+    char buffer[1024];
+    size_t bytes_read;
+    char* hostname;
 
-  fp = fopen("/proc/sys/kernel/hostname", "r");
-  bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-  fclose(fp);
+    fp = fopen("/proc/sys/kernel/hostname", "r");
+    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
+    fclose(fp);
 
-  if(bytes_read == 0 || bytes_read == sizeof(buffer))
-    return 0;
+    if(bytes_read == 0 || bytes_read == sizeof(buffer))
+        return 0;
 
-  buffer[bytes_read] = '\0';
+    buffer[bytes_read] = '\0';
 
-  hostname = strtok(buffer, "");
-  return hostname;
+    hostname = strtok(buffer, "");
+    return hostname;
 }
 
 int get_filesystems () {
-  FILE* fp;
-  char buffer[1024];
-  size_t bytes_read;
-  int c = 0;
-  int sysfile = 0;
+    FILE* fp;
+    char buffer[1024];
+    size_t bytes_read;
+    int c = 0;
+    int sysfile = 0;
 
-  fp = fopen("/proc/filesystems", "r");
-  bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-  fclose(fp);
+    fp = fopen("/proc/filesystems", "r");
+    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
+    fclose(fp);
 
-  if(bytes_read == 0 || bytes_read == sizeof(buffer))
-    return 0;
+    if(bytes_read == 0 || bytes_read == sizeof(buffer))
+        return 0;
 
-  buffer[bytes_read] = '\0';
+    buffer[bytes_read] = '\0';
 
-  while (buffer[c] != '\0') {
-    if (buffer[c] == '\n') {
-      sysfile++;
-      c++;
+    while (buffer[c] != '\0') {
+        if (buffer[c] == '\n') {
+            sysfile++;
+            c++;
+        } else {
+            c++;
+        }
     }
-    else  c++;
-  }
-  return sysfile;
+
+    return sysfile;
 }
 
 char* get_cpu_model() {
@@ -172,13 +167,13 @@ char* get_cpu_model() {
     bytes_read = fread(buffer, 1, sizeof(buffer), fp);
 
     if (bytes_read == 0 || bytes_read == sizeof(buffer))
-	    return 0;
+        return 0;
 
     buffer[bytes_read] = '\0';
 
     match = strstr(buffer, "model name");
     if (match == NULL)
-	    return "Can't find value.";
+        return "Can't find value.";
 
     matchaux = strstr(match, ":");
     model = strtok(matchaux, "\n");
@@ -198,13 +193,13 @@ char* get_cpu_type() {
     bytes_read = fread(buffer, 1, sizeof(buffer), fp);
 
     if (bytes_read == 0 || bytes_read == sizeof(buffer))
-	    return 0;
+        return 0;
 
     buffer[bytes_read] = '\0';
 
     match = strstr(buffer, "vendor_id");
     if (match == NULL)
-	    return "Can't find value.";
+        return "Can't find value.";
 
     matchaux = strstr(match, ":");
     type = strtok(matchaux, "\n");
@@ -213,33 +208,29 @@ char* get_cpu_type() {
 }
 
 void get_s_options() {
-  FILE* fp;
-  char buffer[9999];
-  size_t bytes_read;
-  char user[10], nice[10], sys[10], idle[10], ctxt[10],
-   processes[10];
+    FILE* fp;
+    char buffer[9999];
+    size_t bytes_read;
+    char user[10], nice[10], sys[10], idle[10], ctxt[10],
+         processes[10];
 
-  fp = fopen("/proc/stat", "r");
-  bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-  fclose(fp);
-  if(bytes_read == 0 || bytes_read == sizeof(buffer))
-    return;
-  buffer[bytes_read] = '\0';
+    fp = fopen("/proc/stat", "r");
+    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
+    fclose(fp);
+    if(bytes_read == 0 || bytes_read == sizeof(buffer))
+        return;
+    buffer[bytes_read] = '\0';
 
-  printf("STAT OPTIONS \n");
-  // ESCANEO E IMPRESION CPU TIME
-  sscanf(buffer, "cpu %s %s %s %s", user, nice, sys, idle);
-  printf("CPU Time: User: %s System: %s Idle: %s\n", user, sys, idle);
-  // ESCANEO E IMPRESION CTXT SWITCHES
-  char* ctxt_tmp = strstr(buffer, "ctxt");
-  sscanf(ctxt_tmp, "ctxt %s", ctxt);
-  printf("Context switches: %s\n", ctxt);
+    printf("STAT OPTIONS \n");
+    // ESCANEO E IMPRESION CPU TIME
+    sscanf(buffer, "cpu %s %s %s %s", user, nice, sys, idle);
+    printf("CPU Time: User: %s System: %s Idle: %s\n", user, sys, idle);
+    // ESCANEO E IMPRESION CTXT SWITCHES
+    char* ctxt_tmp = strstr(buffer, "ctxt");
+    sscanf(ctxt_tmp, "ctxt %s", ctxt);
+    printf("Context switches: %s\n", ctxt);
 
-  char* processes_tmp = strstr(buffer, "processes");
-  sscanf(processes_tmp, "processes %s", processes);
-  printf("Processes: %s\n", processes);
-
-
-  printf("\n");
-  return;
+    char* processes_tmp = strstr(buffer, "processes");
+    sscanf(processes_tmp, "processes %s", processes);
+    printf("Processes: %s\n\n", processes);
 }
