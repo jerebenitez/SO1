@@ -73,48 +73,34 @@ void get_file_as_string(char* file_name, char** buffer) {
 }
 
 char* get_kernel_version () {
-    FILE* fp;
-    char buffer[1024];
-    size_t bytes_read;
+    char* buffer = NULL;
     char* match;
     char kernel_version[100];
     
     memset(&kernel_version[0], 0, sizeof(kernel_version));
-
-    fp = fopen("/proc/version", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
-
-    if(bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
+    
+    get_file_as_string("/proc/version", &buffer);
+    if (buffer == NULL)
+        return "Can't read version.";
 
     match = strstr(buffer, "Linux version");
 
     if (match == NULL)
-        return 0;
+        return "Can't find version.";
 
     sscanf(match, "Linux version %s", kernel_version);
     return kernel_version;
 }
 
 char* get_seconds_up() {
-    FILE* fp;
-    char buffer[1024];
-    size_t bytes_read;
+    char* buffer = NULL;
     char* seconds_up;
-
-    fp = fopen("/proc/uptime", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
-
-    if(bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
-    seconds_up = strtok(buffer, " ");
     
+    get_file_as_string("/proc/uptime", &buffer);
+    if (buffer == NULL)
+        return "Can't read uptime.";
+
+    seconds_up = strtok(buffer, " ");   
     return seconds_up;
 }
 
@@ -125,40 +111,26 @@ char* get_time() {
 }
 
 char* get_hostname () {
-    FILE* fp;
-    char buffer[1024];
-    size_t bytes_read;
+    char* buffer = NULL;
     char* hostname;
-
-    fp = fopen("/proc/sys/kernel/hostname", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
-
-    if(bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
+    
+    get_file_as_string("/proc/sys/kernel/hostname", &buffer);
+    if (buffer == NULL)
+        return "Can't read hostname.";
 
     hostname = strtok(buffer, "");
     return hostname;
 }
 
 int get_filesystems () {
-    FILE* fp;
-    char buffer[1024];
-    size_t bytes_read;
+    char* buffer = NULL;
     int c = 0;
     int sysfile = 0;
-
-    fp = fopen("/proc/filesystems", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-    fclose(fp);
-
-    if(bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
-
+    
+    get_file_as_string("/proc/filesystems", &buffer);
+    if (buffer == NULL)
+        return -1;
+    
     while (buffer[c] != '\0') {
         if (buffer[c] == '\n') {
             sysfile++;
@@ -172,20 +144,14 @@ int get_filesystems () {
 }
 
 char* get_cpu_model() {
-    FILE* fp;
-    char buffer[10000];
-    size_t bytes_read;
+    char* buffer = NULL;
     char* match;
     char* matchaux;
     char* model;
-
-    fp = fopen("/proc/cpuinfo", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-
-    if (bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
+    
+    get_file_as_string("/proc/cpuinfo", &buffer);
+    if (buffer == NULL)
+        return "Can't read cpuinfo.";
 
     match = strstr(buffer, "model name");
     if (match == NULL)
@@ -198,20 +164,14 @@ char* get_cpu_model() {
 }
 
 char* get_cpu_type() {
-    FILE* fp;
-    char buffer[10000];
-    size_t bytes_read;
+    char* buffer = NULL;
     char* match;
     char* matchaux;
     char* type;
-
-    fp = fopen("/proc/cpuinfo", "r");
-    bytes_read = fread(buffer, 1, sizeof(buffer), fp);
-
-    if (bytes_read == 0 || bytes_read == sizeof(buffer))
-        return 0;
-
-    buffer[bytes_read] = '\0';
+    
+    get_file_as_string("/proc/cpuinfo", &buffer);
+    if (buffer == NULL)
+        return "Can't read cpuinfo.";
 
     match = strstr(buffer, "vendor_id");
     if (match == NULL)
