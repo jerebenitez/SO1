@@ -5,12 +5,65 @@
 #include<unistd.h>
 #include<getopt.h>
 
-struct Uptime {
-  int days;
-  int hours;
-  int minutes;
-  float seconds;
-};
+#include "ksamp.h"
+
+int main(int argc, char *argv[]){
+
+  float tmp_seconds;
+  int next_option;
+  const char* const short_options = "s";  // OPCIONES CORTAS
+  const struct option long_options [] = {   // OPCIONES LARGAS,
+    {"stat", 0, NULL, 's'},
+    {NULL, 0, NULL, 0},
+  };
+  do {
+    next_option = getopt_long (argc, argv, short_options,
+       long_options, NULL);
+
+       switch (next_option) {
+          case 's':
+            get_s_options();
+            break;
+          case '?':
+            break;
+          case -1:
+            break;
+          default:
+            abort();
+        }
+  } while (next_option != -1);
+
+
+    struct Uptime ut = { //INSTANCIA UPTIME
+      .seconds = 0,
+      .days = 0,
+      .hours = 0,
+      .minutes = 0,
+    };
+    // LECTURA DE SEGUNDOS (LEER get_seconds_up())
+    tmp_seconds = atof(get_seconds_up()); // atof() - de char a float
+    // PASAJE DE SEGUNDOS A FORMATO FECHA
+    ut.days = tmp_seconds / 86400;
+    ut.hours = tmp_seconds / 3600 - ut.days * 24;
+    ut.minutes = tmp_seconds / 60 - ut.hours * 60;
+    ut.seconds = tmp_seconds - ut.days * 86400 - ut.hours * 3600
+     - ut.minutes * 60;
+
+
+    printf("Hostname: %s", get_hostname());
+    printf("Kernel version: %s \n", get_kernel_version());
+    printf("Time: %s", get_time());
+    printf("Uptime: %iD %i/%i/%.2f  Upseconds: %.2f \n", ut.days,
+    ut.hours, ut.minutes, ut.seconds , tmp_seconds);
+    printf("CPU type%s \n", get_cpu_type());
+    printf("CPU model%s \n", get_cpu_model());
+    printf("Allowed filesystems quantity: %i\n", get_filesystems());
+
+
+
+
+    return 0;
+}
 
 char* get_kernel_version () {
     FILE* fp;
@@ -189,62 +242,4 @@ void get_s_options() {
 
   printf("\n");
   return;
-}
-
-int main(int argc, char *argv[]){
-
-  float tmp_seconds;
-  int next_option;
-  const char* const short_options = "s";  // OPCIONES CORTAS
-  const struct option long_options [] = {   // OPCIONES LARGAS,
-    {"stat", 0, NULL, 's'},
-    {NULL, 0, NULL, 0},
-  };
-  do {
-    next_option = getopt_long (argc, argv, short_options,
-       long_options, NULL);
-
-       switch (next_option) {
-          case 's':
-            get_s_options();
-            break;
-          case '?':
-            break;
-          case -1:
-            break;
-          default:
-            abort();
-        }
-  } while (next_option != -1);
-
-
-    struct Uptime ut = { //INSTANCIA UPTIME
-      .seconds = 0,
-      .days = 0,
-      .hours = 0,
-      .minutes = 0,
-    };
-    // LECTURA DE SEGUNDOS (LEER get_seconds_up())
-    tmp_seconds = atof(get_seconds_up()); // atof() - de char a float
-    // PASAJE DE SEGUNDOS A FORMATO FECHA
-    ut.days = tmp_seconds / 86400;
-    ut.hours = tmp_seconds / 3600 - ut.days * 24;
-    ut.minutes = tmp_seconds / 60 - ut.hours * 60;
-    ut.seconds = tmp_seconds - ut.days * 86400 - ut.hours * 3600
-     - ut.minutes * 60;
-
-
-    printf("Hostname: %s", get_hostname());
-    printf("Kernel version: %s \n", get_kernel_version());
-    printf("Time: %s", get_time());
-    printf("Uptime: %iD %i/%i/%.2f  Upseconds: %.2f \n", ut.days,
-    ut.hours, ut.minutes, ut.seconds , tmp_seconds);
-    printf("CPU type%s \n", get_cpu_type());
-    printf("CPU model%s \n", get_cpu_model());
-    printf("Allowed filesystems quantity: %i\n", get_filesystems());
-
-
-
-
-    return 0;
 }
