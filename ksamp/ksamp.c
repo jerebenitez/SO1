@@ -32,7 +32,7 @@ int main(int argc, char *argv[]){
             case '?':
             default:
                 print_usage();
-                return 0;
+                return 1;
         }
     }
     
@@ -40,14 +40,21 @@ int main(int argc, char *argv[]){
         print_usage();
         return 0;
     } else if (int_flag == 1) {
-        if (argc > 4) {
+        if (argc != 4) {
             print_usage();
-            return 0;
+            return 1;
         }
         get_interval_duration(atoi(argv[2]), atoi(argv[3]));
         get_s_options();
     } else if (stats_flag == 1) {
+        if (argc > 2) {
+            print_usage();
+            return 1;
+        }
         get_s_options();
+    } else if (argc > 1) {
+        print_usage();
+        return 1;
     }
 
     struct Uptime ut = { //INSTANCIA UPTIME
