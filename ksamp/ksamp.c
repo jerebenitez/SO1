@@ -106,7 +106,7 @@ void get_file_as_string(char* file_name, char** buffer) {
 char* get_kernel_version () {
     char* buffer = NULL;
     char* match;
-    char* kernel_version;
+    char* kernel_version = NULL;
     
     //memset(&kernel_version[0], 0, sizeof(kernel_version));
     
@@ -114,13 +114,13 @@ char* get_kernel_version () {
     if (buffer == NULL)
         return "Can't read version.";
 
-    match = strstr(buffer, "Linux version");
-
+    match = strstr(buffer, "Linux version ");
     if (match == NULL)
-        return "Can't find version.";
+        return "Can't find value.";
 
-    sscanf(match, "Linux version %s", kernel_version);
-    return kernel_version;
+    
+    kernel_version = strtok(match, "Linux version ");
+    return kernel_version;    
 }
 
 char* get_seconds_up() {
