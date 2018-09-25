@@ -249,7 +249,7 @@ void get_interval_duration(int a, int b) {
         sleep(a);
     }
     printf("Peticiones a disco: %ld\n", get_disk_requests());
-	printf("Memoria disponible/total: %s/%s\n", get_available_mem(), get_total_mem());
+	printf("Memoria disponible/total: %s / %s\n", get_available_mem(), get_total_mem());
 	printf("Promedio de carga en el ùltimo minuto: %.2f\n", get_load_avg());
     printf("\n");
     
@@ -280,8 +280,7 @@ char* get_total_mem() {
     if (match == NULL)
         return "Can't find total memory.";
     
-    match = strstr(match, ":");
-    match = strtok(match, "\n");
+    match = strtok(match, "MemTotal: ");
     return match;
 }
 
@@ -297,8 +296,7 @@ char* get_available_mem() {
     if (match == NULL)
         return "Can't find total memory.";
     
-    match = strstr(match, ":");
-    match = strtok(match, "\n");
+    match = strtok(match, "MemAvailable: ");
     return match;
 }
 
