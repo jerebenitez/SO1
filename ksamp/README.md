@@ -1,4 +1,11 @@
-# SO1 2018 - Trabajo práctico 1 
+# SO1 2018 - Trabajo práctico 1
+
+## Integrantes
+* Benítez, Darío Jeremías
+
+* Sarquis, Tomás
+
+## Introducción
 El objetivo de este trabajo práctico es entender la estructura del kernel de Linux un poco más en profundidad, saliendo de lo puramente teórico. Para lograr este objetivo se realizó un programa que busca información específica del sistema utilizando los archivos encontrados en el directorio /proc.
 
 
