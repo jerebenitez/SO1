@@ -308,7 +308,7 @@ long get_disk_requests() {
     if (buffer == NULL)
         return -1;
     
-    sscanf(buffer, "%*d %*d sda %*d %*d %ld %*d %*d %*d %ld %*d %*d %*d %*d", &sectors_read, &sectors_written);
+    sscanf(buffer, "%*d %*d sd%*c %*d %*d %ld %*d %*d %*d %ld %*d %*d %*d %*d", &sectors_read, &sectors_written);
         
     return sectors_read + sectors_written;
 }
