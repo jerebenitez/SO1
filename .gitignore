@@ -1,10 +1,6 @@
 # tar files for release
 *.tar
 
-# compiled files
-ksamp
-baash
-
 # Prerequisites
 *.d
 
