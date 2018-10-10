@@ -1,13 +1,17 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #include "baash.h"
 
 int main(int argc, char* argv[]) {
     char *line;
     char **args;
-    int status = 1;
+    int status = 1, stat_loc;
+    pid_t child_pid;
     
     // main shell loop
     while (status) {
@@ -15,6 +19,13 @@ int main(int argc, char* argv[]) {
 
         line = get_command();
         args = parse_command(line);
+
+        child_pid = fork();
+        if (child_pid == 0) {
+            execvp(args[0], args);
+        } else {
+            waitpid(child_pid, &stat_loc, WUNTRACED);
+        }
 
         status = 1;
         free(line);
@@ -39,14 +50,15 @@ char **parse_command(char *line) {
     char *token;
     int pos = 0;
 
-    if ((tokens = malloc(sizeof(char *) * 128)) == NULL)
+    if ((tokens = malloc(sizeof(char *) * BUF_ARGS_SIZE)) == NULL) {
         perror("Memory could not be allocated");
         exit(EXIT_FAILURE);
+    }
 
-    token = strtok(line, " \t\r\n\a");
+    token = strtok(line, ARGS_DELIM);
     while (token != NULL) {
         tokens[pos++] = token;
-        token = strtok(NULL, " \t\r\n\a");
+        token = strtok(NULL, ARGS_DELIM);
     }
 
     tokens[pos] = NULL;
