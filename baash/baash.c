@@ -20,9 +20,13 @@ int main(int argc, char* argv[]) {
         line = get_command();
         args = parse_command(line);
 
+        // primitive implementation of exit
+        if (!strcmp(args[0], "exit"))
+            break;
+
         child_pid = fork();
         if (child_pid == 0) {
-            execvp(args[0], args);
+            invoke(args[0], args);
         } else {
             waitpid(child_pid, &stat_loc, WUNTRACED);
         }
@@ -33,7 +37,7 @@ int main(int argc, char* argv[]) {
     }
 
     // exit from shell
-    printf("Bye!");   
+    printf("Bye!\n");   
     return EXIT_SUCCESS;
 }
 
@@ -63,4 +67,14 @@ char **parse_command(char *line) {
 
     tokens[pos] = NULL;
     return tokens;
+}
+
+void invoke(char *program, char **argv) {
+    if (program[0] == '\\') {
+        // the path is absolute
+    } else if (program[0] == '.') {
+        // the path is relative
+    } else {
+        // search in $PATH
+    }
 }
