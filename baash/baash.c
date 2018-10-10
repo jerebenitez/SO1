@@ -69,12 +69,32 @@ char **parse_command(char *line) {
     return tokens;
 }
 
-void invoke(char *program, char **argv) {
-    if (program[0] == '\\') {
-        // the path is absolute
-    } else if (program[0] == '.') {
-        // the path is relative
+void invoke(char *program, char **args) {
+    // if there is an absolute or relative path, the program needn't be looked for
+    if (program[0] == '/' || program[0] == '.') {
+        execv(program, args);
     } else {
         // search in $PATH
+        char *paths = getenv("PATH");
+        char *path;
+        char *buf;
+        size_t sz;
+
+        path = strtok(paths, ":");
+        while (path != NULL) {
+            //printf("%s\n", path);
+            sz = snprintf(NULL, 0, "%s/%s", path, program);
+            buf = (char *)malloc(sz + 1);
+            if (buf == NULL)
+                exit(EXIT_FAILURE);
+            snprintf(buf, sz+1, "%s/%s", path, program);
+            execv(buf, args);
+            free(buf);
+            path = strtok(NULL, ":");
+        }
+
+        free(paths);
+        free(path);
+        free(buf);
     }
 }
