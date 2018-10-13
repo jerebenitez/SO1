@@ -21,7 +21,7 @@ int main(int argc, char* argv[]) {
         args = parse_command(line);
 
         // primitive implementation of exit
-        if (strcmp(args[0], "exit") == 0){
+        if (args[0] != NULL && strcmp(args[0], "exit") == 0){
             printf("Bye!\n");
             break;
         }
