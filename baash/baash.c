@@ -107,7 +107,8 @@ void invoke(char *program, char **args) {
         }
 
         if(!status)
-            printf("baash: %s: no se encontró la orden.\n", program);
+            if (! (execv(program, args) < 0))
+                printf("baash: %s: no se encontró la orden.\n", program);
 
         free(paths);
         free(path);
