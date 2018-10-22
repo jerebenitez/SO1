@@ -3,5 +3,5 @@
 
 void main_loop(void);
 char *get_command(void);
-char **parse_command(char* command);
+char **parse_command(char*, int*);
 void invoke(char*, char**);

@@ -16,6 +16,7 @@ int main(int argc, char* argv[]) {
     while (status) {
         char *line;
         char **args;
+        int bg_command = 0;
         
         char cwd[PATH_MAX];
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -26,7 +27,7 @@ int main(int argc, char* argv[]) {
         printf("%s $ ", cwd);
 
         line = get_command();
-        args = parse_command(line);
+        args = parse_command(line, &bg_command);
 
         // primitive implementation of exit
         if (args[0] != NULL){
@@ -49,7 +50,8 @@ int main(int argc, char* argv[]) {
             free(args);
             break;
         } else {
-            waitpid(child_pid, &stat_loc, WUNTRACED);
+            if (!bg_command)
+                waitpid(child_pid, &stat_loc, WUNTRACED);
         }
 
         status = 1;
@@ -72,7 +74,7 @@ char *get_command() {
     return line;
 }
 
-char **parse_command(char *line) {
+char **parse_command(char *line, int *bg_command) {
     char **tokens;
     char *token;
     int pos = 0;
@@ -88,6 +90,11 @@ char **parse_command(char *line) {
         token = strtok(NULL, ARGS_DELIM);
     }
 
+    if (pos != 0 && *tokens[pos - 1] == '&'){
+        pos--;
+        *bg_command = 1;
+    }
+        
     tokens[pos] = NULL;
     return tokens;
 }
