@@ -2,28 +2,43 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
+#include <limits.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
 #include "baash.h"
 
 int main(int argc, char* argv[]) {
-    char *line;
-    char **args;
     int status = 1, stat_loc;
     pid_t child_pid;
     
     // main shell loop
     while (status) {
-        printf("%s> ", "test_shell");
+        char *line;
+        char **args;
+        
+        char cwd[PATH_MAX];
+        if (getcwd(cwd, sizeof(cwd)) == NULL) {
+            perror("Can't read current directory...");
+            return 1;
+        }
+
+        printf("%s $ ", cwd);
 
         line = get_command();
         args = parse_command(line);
 
         // primitive implementation of exit
-        if (args[0] != NULL && strcmp(args[0], "exit") == 0){
-            printf("Bye!\n");
-            break;
+        if (args[0] != NULL){
+            if (strcmp(args[0], "exit") == 0){
+                printf("Bye!\n");
+                break;
+            } else if (strcmp(args[0], "cd") == 0) {
+                chdir(args[1]);
+                free(line);
+                free(args);
+                continue;
+            }
         }
 
         child_pid = fork();
