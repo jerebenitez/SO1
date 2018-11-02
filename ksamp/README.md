@@ -16,7 +16,7 @@ Este es un directorio virtual (los archivos acá encontrados son generados por e
 ## Sobre el programa
 El programa se realizó siguiendo las especificaciones dadas por la cátedra. Para la implementación se dividió el mismo en tres etapas, cada una correspondiente a las partes B, C, y D de la especificación. 
 
-La primer etapa, en la que se implementó la parte B, se realizó utilizando pair programming para permitir asé que, luego, ambos alumnos supieran qué hacer, y tuvieran una idea similar de cómo hacerlo.
+La primer etapa, en la que se implementó la parte B, se realizó utilizando pair programming para permitir así que, luego, ambos alumnos supieran qué hacer, y tuvieran una idea similar de cómo hacerlo.
 
 Las otras dos etapas fueron desarrolladas cada una por un alumno distinto.
 
