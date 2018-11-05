@@ -6,7 +6,28 @@
 #include <sys/types.h>
 #include <sys/wait.h>
 
-#include "baash.h"
+// Constants
+#define BUF_ARGS_SIZE 1024
+#define ARGS_DELIM " \t\r\n\a"
+
+// Nodo for commands linked list
+typedef struct command {
+    char *command;
+    char **argv;
+    int argc;
+    int is_concurrent;
+    int is_piped;
+    char *input;
+    char *output;
+
+    struct command *next;
+} command_node;
+
+// Prototypes
+void main_loop(void);
+char *get_command(void);
+char **parse_command(char*, int*);
+void invoke(char*, char**);
 
 int main(int argc, char* argv[]) {
     int status = 1, stat_loc;
@@ -17,14 +38,24 @@ int main(int argc, char* argv[]) {
         char *line;
         char **args;
         int bg_command = 0;
+        command_node *start = NULL;
+
+        start = malloc(sizeof(command_node));
+        if (start == NULL)
+            return 1;
+
+        start->next = NULL;
         
         char cwd[PATH_MAX];
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
             perror("Can't read current directory...");
             return 1;
         }
-
-        printf("%s $ ", cwd);
+        
+        char *user = getenv("USER");
+        char host[BUF_ARGS_SIZE];
+        gethostname(host, BUF_ARGS_SIZE);
+        printf("%s@%s  %s$ ", user, host, cwd);
 
         line = get_command();
         args = parse_command(line, &bg_command);
@@ -43,6 +74,10 @@ int main(int argc, char* argv[]) {
         }
 
         child_pid = fork();
+        if (child_pid < 0) {
+            perror("Error in fork.\n");
+            exit(EXIT_FAILURE);
+        }
         if (child_pid == 0) {
             invoke(args[0], args);
             // in case execv did return, so as to not have both shells (parent and child) running
