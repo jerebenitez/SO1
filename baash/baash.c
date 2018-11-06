@@ -26,8 +26,11 @@ typedef struct command {
 // Prototypes
 void main_loop(void);
 char *get_command(void);
-char **parse_command(char*, int*);
+void parse_command(char*, command_node*);
 void invoke(char*, char**);
+
+char is_delim(char*);
+command_node *new_node();
 
 int main(int argc, char* argv[]) {
     int status = 1, stat_loc;
@@ -36,8 +39,6 @@ int main(int argc, char* argv[]) {
     // main shell loop
     while (status) {
         char *line;
-        char **args;
-        int bg_command = 0;
         command_node *start = NULL;
 
         start = malloc(sizeof(command_node));
@@ -58,9 +59,10 @@ int main(int argc, char* argv[]) {
         printf("%s@%s  %s$ ", user, host, cwd);
 
         line = get_command();
-        args = parse_command(line, &bg_command);
+        parse_command(line, start);
 
         // primitive implementation of exit
+        // TODO: this should be inside the iteration of the linked list.
         if (args[0] != NULL){
             if (strcmp(args[0], "exit") == 0){
                 printf("Bye!\n");
@@ -68,7 +70,6 @@ int main(int argc, char* argv[]) {
             } else if (strcmp(args[0], "cd") == 0) {
                 chdir(args[1]);
                 free(line);
-                free(args);
                 continue;
             }
         }
@@ -82,7 +83,6 @@ int main(int argc, char* argv[]) {
             invoke(args[0], args);
             // in case execv did return, so as to not have both shells (parent and child) running
             free(line);
-            free(args);
             break;
         } else {
             if (!bg_command)
@@ -91,7 +91,6 @@ int main(int argc, char* argv[]) {
 
         status = 1;
         free(line);
-        free(args);
     }
 
     // exit from shell
@@ -109,29 +108,73 @@ char *get_command() {
     return line;
 }
 
-char **parse_command(char *line, int *bg_command) {
-    char **tokens;
+void parse_command(char *line,  command_node *node) {
     char *token;
     int pos = 0;
 
-    if ((tokens = malloc(sizeof(char *) * BUF_ARGS_SIZE)) == NULL) {
-        perror("Memory could not be allocated");
-        exit(EXIT_FAILURE);
-    }
-
     token = strtok(line, ARGS_DELIM);
+    int delim_required = 0;
+
     while (token != NULL) {
-        tokens[pos++] = token;
+        char delim = is_delim(token);
+        
+        if (delim_required && delim < 0) {
+            perror("Syntax error.\n");
+            exit(EXIT_FAILURE);
+        }
+        
+        if (pos == 0 && delim < 0) {
+            node->command = token;
+        } else if (pos == 0 && delim >= 0 && delim != ';') {
+            perror("Syntax error.\n");
+            exit(EXIT_FAILURE);
+        }
+
+        if (delim < 0) {
+            node->argv[pos++] = token;
+            node->argc++;
+        } else {
+            switch (delim) {
+                case '|':
+                    node->is_piped = 1;
+                    delim_required = 0;
+                    node->next = new_node();
+                    node = node->next;
+                    break;
+                case '&':
+                    node->is_concurrent = 1;
+                    delim_required = 0;
+                    node->next = new_node();
+                    node = node->next;
+                    break;
+                case '>':
+                    node->output = strtok(NULL, ARGS_DELIM);
+                    delim_required  = 1;
+                    break;
+                case '<':
+                    node->input = strtok(NULL, ARGS_DELIM);
+                    delim_required = 1;
+                    break;
+                default:
+                    delim_required = 0;
+                    break;
+            } 
+        }
+
         token = strtok(NULL, ARGS_DELIM);
     }
+}
 
-    if (pos != 0 && *tokens[pos - 1] == '&'){
-        pos--;
-        *bg_command = 1;
+char is_delim(char *string) {
+    char *SPECIAL_CHARS[] = {"|", ">", "<", "&", ";"};
+    int SPECIAL_CHARS_LEN = sizeof(SPECIAL_CHARS)/sizeof(SPECIAL_CHARS[0]);
+    
+    for (int i = 0; i < SPECIAL_CHARS_LEN; i++) {
+        if (strcmp(string, SPECIAL_CHARS[i]) == 0)
+            return SPECIAL_CHARS[i][0];
+        else
+            return -1;
     }
-        
-    tokens[pos] = NULL;
-    return tokens;
 }
 
 void invoke(char *program, char **args) {
@@ -147,6 +190,10 @@ void invoke(char *program, char **args) {
         int status = 0;
 
         path = strtok(paths, ":");
+        
+        /*
+         * Agrego program a PATH por si el ./ está implícito
+         */
         while (path != NULL) {
             size_t sz;
             sz = snprintf(NULL, 0, "%s/%s", path, program);
