@@ -200,8 +200,11 @@ command_node *new_node() {
 }
 
 void invoke(char *program, char **args) {
+    
+    // check if program is an internal command
     if (strcmp(program, "exit") == 0){
         printf("Bye!\n");
+        kill(getppid(), 9);
         exit(EXIT_SUCCESS);
     } else if (strcmp(program, "cd") == 0) {
         chdir(args[1]);
