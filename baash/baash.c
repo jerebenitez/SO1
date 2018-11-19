@@ -39,13 +39,7 @@ int main(int argc, char* argv[]) {
     // main shell loop
     while (status) {
         char *line;
-        command_node *start = NULL;
-
-        start = malloc(sizeof(command_node));
-        if (start == NULL)
-            return 1;
-
-        start->next = NULL;
+        command_node *start = new_node();
         
         char cwd[PATH_MAX];
         if (getcwd(cwd, sizeof(cwd)) == NULL) {
@@ -61,33 +55,26 @@ int main(int argc, char* argv[]) {
         line = get_command();
         parse_command(line, start);
 
-        // primitive implementation of exit
-        // TODO: this should be inside the iteration of the linked list.
-        if (args[0] != NULL){
-            if (strcmp(args[0], "exit") == 0){
-                printf("Bye!\n");
-                break;
-            } else if (strcmp(args[0], "cd") == 0) {
-                chdir(args[1]);
-                free(line);
-                continue;
+        while (start != NULL) {
+            child_pid = fork();
+
+            if (child_pid < 0) {
+                perror("Error in fork.\n");
+                exit(EXIT_FAILURE);
             }
+            if (child_pid == 0) {
+                invoke(start->command, start->argv);
+                // in case execv did return, so as to not have both shells (parent and child) running
+                free(line);
+                break;
+            } else {
+                if (!start->is_concurrent)
+                    waitpid(child_pid, &stat_loc, WUNTRACED);
+            }
+
+            start = start->next;
         }
 
-        child_pid = fork();
-        if (child_pid < 0) {
-            perror("Error in fork.\n");
-            exit(EXIT_FAILURE);
-        }
-        if (child_pid == 0) {
-            invoke(args[0], args);
-            // in case execv did return, so as to not have both shells (parent and child) running
-            free(line);
-            break;
-        } else {
-            if (!bg_command)
-                waitpid(child_pid, &stat_loc, WUNTRACED);
-        }
 
         status = 1;
         free(line);
@@ -108,7 +95,8 @@ char *get_command() {
     return line;
 }
 
-void parse_command(char *line,  command_node *node) {
+void parse_command(char *line,  command_node *head) {
+    command_node *node = head; 
     char *token;
     int pos = 0;
 
@@ -131,7 +119,14 @@ void parse_command(char *line,  command_node *node) {
         }
 
         if (delim < 0) {
-            node->argv[pos++] = token;
+            // get size of token
+            size_t sz_token = snprintf(NULL, 0, "%s", token);
+            // alloc memory to store it
+            node->argv[pos] = (char *)malloc(sz_token * sizeof(token));
+            // assign it
+            sprintf(node->argv[pos], token);
+            pos++;
+            // increment number of arguments
             node->argc++;
         } else {
             switch (delim) {
@@ -140,23 +135,32 @@ void parse_command(char *line,  command_node *node) {
                     delim_required = 0;
                     node->next = new_node();
                     node = node->next;
+                    pos = 0;
                     break;
                 case '&':
                     node->is_concurrent = 1;
                     delim_required = 0;
                     node->next = new_node();
                     node = node->next;
+                    pos = 0;
                     break;
                 case '>':
                     node->output = strtok(NULL, ARGS_DELIM);
+                    if (node->output == NULL)
+                        exit(EXIT_FAILURE);
                     delim_required  = 1;
                     break;
                 case '<':
                     node->input = strtok(NULL, ARGS_DELIM);
+                    if (node->input == NULL)
+                        exit(EXIT_FAILURE);
                     delim_required = 1;
                     break;
                 default:
+                    pos = 0;
                     delim_required = 0;
+                    node->next = new_node();
+                    node = node->next;
                     break;
             } 
         }
@@ -172,12 +176,38 @@ char is_delim(char *string) {
     for (int i = 0; i < SPECIAL_CHARS_LEN; i++) {
         if (strcmp(string, SPECIAL_CHARS[i]) == 0)
             return SPECIAL_CHARS[i][0];
-        else
-            return -1;
     }
+
+    return -1;
+}
+
+command_node *new_node() {
+    command_node *node = malloc(sizeof(command_node));
+    if (node == NULL)
+        exit(EXIT_FAILURE);  
+
+    node->command = NULL;
+    // argv can have a maximum of 100 elements
+    node->argv = (char **)malloc(100*sizeof(char *));
+    node->argc = 0;
+    node->is_concurrent = 0;
+    node->is_piped = 0;
+    node->input = NULL;
+    node->output = NULL;
+    node->next=NULL;
+
+    return node;
 }
 
 void invoke(char *program, char **args) {
+    if (strcmp(program, "exit") == 0){
+        printf("Bye!\n");
+        exit(EXIT_SUCCESS);
+    } else if (strcmp(program, "cd") == 0) {
+        chdir(args[1]);
+        return;
+    }
+    
     // if there is an absolute or relative path, the program needn't be looked for
     if (program[0] == '/' || program[0] == '.') {
         if (execv(program, args) < 0)
@@ -186,36 +216,40 @@ void invoke(char *program, char **args) {
         // search in $PATH
         char *paths = getenv("PATH");
         char *path;
-        char *buf;
-        int status = 0;
+        int status = 1;
 
         path = strtok(paths, ":");
         
         /*
-         * Agrego program a PATH por si el ./ está implícito
+         * Agrego program al final de cada entrada de $PATH y llamo a execv con eso para ver si
+         * lo encuentra y lo puede ejecutar. Si no, va a retornar un -1 que va a cambiar status
          */
         while (path != NULL) {
-            size_t sz;
-            sz = snprintf(NULL, 0, "%s/%s", path, program);
-            buf = (char *)malloc(sz + 1);
+            size_t sz = snprintf(NULL, 0, "%s/%s", path, program);
+            char *buf = (char *)malloc(sz + 1);
             if (buf == NULL)
                 exit(EXIT_FAILURE);
             
             snprintf(buf, sz+1, "%s/%s", path, program);
-            if (!(execv(buf, args) < 0)) {
-                status = 1;
-                break;
-            }
-            free(buf);
+            
+            // Si execv retorna, es porque no pudo ejecutar el programa
+            if ((execv(buf, args) < 0))
+                status = 0;
+            
             path = strtok(NULL, ":");
+            free(buf);
         }
 
+        /*
+         * Si al recorrer $PATH no se ejecutó el programa, intento ejecutarlo directamente por si
+         * la direcció es relativa pero tiene el ./ implícito.
+         * Ej: $HOME/SO1 $ ksamp/ksamp (equivalente a ./ksamp/ksamp)
+         */
         if(!status)
-            if (! (execv(program, args) < 0))
+            if ((execv(program, args) < 0))
                 printf("baash: %s: no se encontró la orden.\n", program);
 
         free(paths);
         free(path);
-        free(buf);
     }
 }
