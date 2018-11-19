@@ -122,7 +122,7 @@ void parse_command(char *line,  command_node *head) {
             // get size of token
             size_t sz_token = snprintf(NULL, 0, "%s", token);
             // alloc memory to store it
-            node->argv[pos] = (char *)malloc(sz_token * sizeof(token));
+            node->argv[pos] = (char *)malloc((sz_token + 1) * sizeof(char));
             // assign it
             sprintf(node->argv[pos], token);
             pos++;
