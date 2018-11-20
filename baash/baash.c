@@ -70,7 +70,7 @@ int main(int argc, char* argv[]) {
         int fdin;
         if (start->input) {
             // use declared input
-            fdin = open(start->input, O_WRONLY | O_CREAT | O_TRUNC);
+            fdin = open(start->input, O_RDONLY);
         } else {
             // or use default input
             fdin = dup(tmpin);
@@ -86,7 +86,7 @@ int main(int argc, char* argv[]) {
             if (!start->is_piped) {
                 // last piped command
                 if (start->output) {
-                    fdout = open(start->output, O_RDONLY);
+                    fdout = open(start->output, O_WRONLY | O_CREAT | O_TRUNC, 0666);
                 } else {
                     // use default output
                     fdout = dup(tmpout);
