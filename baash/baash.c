@@ -3,6 +3,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <limits.h>
+#include <fcntl.h>
 #include <sys/types.h>
 #include <sys/wait.h>
 
@@ -28,16 +29,18 @@ void main_loop(void);
 char *get_command(void);
 void parse_command(char*, command_node*);
 void invoke(char*, char**);
-
+// utils
 char is_delim(char*);
 command_node *new_node();
+void spawn_proc(int, int, command_node*);
 
 int main(int argc, char* argv[]) {
-    int status = 1, stat_loc;
-    pid_t child_pid;
+    int status = 1;
     
     // main shell loop
     while (status) {
+        int background = 0;
+        int stat_loc;
         char *line;
         command_node *start = new_node();
         
@@ -55,26 +58,73 @@ int main(int argc, char* argv[]) {
         line = get_command();
         parse_command(line, start);
 
-        while (start != NULL) {
-            child_pid = fork();
+        // an & given to any command in the chain is treated
+        // as if given to the whole chain
+        if (start->is_concurrent)
+            background = 1;
+            
+        // saving stdin and out to restore them later
+        int tmpin = dup(0);
+        int tmpout = dup(1);
 
-            if (child_pid < 0) {
-                perror("Error in fork.\n");
-                exit(EXIT_FAILURE);
-            }
-            if (child_pid == 0) {
-                invoke(start->command, start->argv);
-                // in case execv did return, so as to not have both shells (parent and child) running
-                free(line);
-                break;
-            } else {
-                if (!start->is_concurrent)
-                    waitpid(child_pid, &stat_loc, WUNTRACED);
-            }
-
-            start = start->next;
+        int fdin;
+        if (start->input) {
+            // use declared input
+            fdin = open(start->input, O_WRONLY | O_CREAT | O_TRUNC);
+        } else {
+            // or use default input
+            fdin = dup(tmpin);
         }
 
+        pid_t ret;
+        int fdout;
+        for (; start; start = start->next) {
+            // redirect input
+            dup2(fdin, 0);
+            close(fdin);
+            // setup output
+            if (!start->is_piped) {
+                // last piped command
+                if (start->output) {
+                    fdout = open(start->output, O_RDONLY);
+                } else {
+                    // use default output
+                    fdout = dup(tmpout);
+                }
+            } else {
+                // we are not in the last command yet
+                // create pipe
+                int fdpipe[2];
+                pipe(fdpipe);
+                fdout = fdpipe[1];
+                fdin = fdpipe[0];
+            }
+
+            // redirect output
+            dup2(fdout, 1);
+            close(fdout);
+
+            //create child process
+            ret = fork();
+            // if there was a problem forking
+            if (ret < 0) {
+                perror("fork\n");
+                exit(EXIT_FAILURE);
+            }
+            if (ret == 0) {
+                invoke(start->command, start->argv);
+            }
+        }
+
+        // restore input and output to default
+        dup2(tmpin, 0);
+        dup2(tmpout, 1);
+        close(tmpin);
+        close(tmpout);
+
+        if (!background) {
+            waitpid(ret, &stat_loc, WUNTRACED);
+        }
 
         status = 1;
         free(line);
@@ -197,6 +247,33 @@ command_node *new_node() {
     node->next=NULL;
 
     return node;
+}
+
+void spawn_proc(int in, int out, command_node *node) {
+    pid_t pid;
+    int stat_loc;
+
+    pid = fork();
+
+    if (pid < 0) {
+        perror("Couldn't fork.");
+        exit(EXIT_FAILURE);
+    } else if (pid == 0) {
+        if (in != 0) {
+            dup2(in, 0);
+            close(in);
+        }
+
+        if (out != 1) {
+            dup2(out, 1);
+            close(out);
+        }
+
+        invoke(node->command, node->argv);
+    } else {
+        if (!node->is_concurrent)
+            waitpid(pid, &stat_loc, WUNTRACED);
+    }
 }
 
 void invoke(char *program, char **args) {
