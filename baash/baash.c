@@ -58,10 +58,15 @@ int main(int argc, char* argv[]) {
         line = get_command();
         parse_command(line, start);
 
-        // an & given to any command in the chain is treated
-        // as if given to the whole chain
-        if (start->is_concurrent)
-            background = 1;
+        // check if program is an internal command
+        if (strcmp(start->command, "exit") == 0){
+            printf("Bye!\n");
+            exit(EXIT_SUCCESS);
+        } else if (strcmp(start->command, "cd") == 0) {
+            chdir(start->argv[1]);
+            continue;
+        }
+        
             
         // saving stdin and out to restore them later
         int tmpin = dup(0);
@@ -79,6 +84,11 @@ int main(int argc, char* argv[]) {
         pid_t ret;
         int fdout;
         for (; start; start = start->next) {
+            // an & given to any command in the chain is treated
+            // as if given to the whole chain
+            if (start->is_concurrent)
+                background = 1;
+            
             // redirect input
             dup2(fdin, 0);
             close(fdin);
@@ -278,15 +288,6 @@ void spawn_proc(int in, int out, command_node *node) {
 
 void invoke(char *program, char **args) {
     
-    // check if program is an internal command
-    if (strcmp(program, "exit") == 0){
-        printf("Bye!\n");
-        kill(getppid(), 9);
-        exit(EXIT_SUCCESS);
-    } else if (strcmp(program, "cd") == 0) {
-        chdir(args[1]);
-        return;
-    }
     
     // if there is an absolute or relative path, the program needn't be looked for
     if (program[0] == '/' || program[0] == '.') {
