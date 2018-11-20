@@ -64,7 +64,10 @@ int main(int argc, char* argv[]) {
             exit(EXIT_SUCCESS);
         } else if (strcmp(start->command, "cd") == 0) {
             chdir(start->argv[1]);
-            continue;
+            if (start->next == NULL)
+                continue;
+            else
+                start = start->next;
         }
         
             
