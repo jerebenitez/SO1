@@ -33,11 +33,11 @@ t_block find_block(t_block *last, size_t size)
 
 t_block extend_heap(t_block last, size_t s)
 {                                             // mueve el ptr brk
-  int sb;                                     // de acuerdo al tamaño
+  long sb;                                    // de acuerdo al tamaño
   t_block b;                                  // requerido
   b = sbrk(0);
 
-  sb = (int)sbrk(BLOCK_SIZE + s);
+  sb = (long)sbrk(BLOCK_SIZE + s);
   if(sb < 0)
     return (NULL);
 
@@ -53,7 +53,7 @@ t_block extend_heap(t_block last, size_t s)
   return (b);
 }
 
-t_block split_block(t_block b, size_t s)
+void split_block(t_block b, size_t s)
 {                                               // divide bloque b
   t_block new;                                  // en dos bloques
 
