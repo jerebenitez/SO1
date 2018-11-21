@@ -14,3 +14,4 @@ Para poder asignar memoria de forma óptima, era necesario implementar además m
 El algoritmo utilizado para la asignacion del espacio de memoria fue el first_fit, que se encarga de asignar el primer espacio de memoria compatible que encuentra.
 
 ## Conclusión
+La realización del trabajo nos permitió comprender el procedimiento a la hora de asignar memoria, tanto desde el punto de vista lógico (algorítmico) como desde el punto de vista de su implementación en C. A su vez, apreciamos la importancia del manejo de posibles errores y el tratado de los mismos, debido a que un error en éste tipo de programas puede ser fatal para el mismo.
