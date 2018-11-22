@@ -43,6 +43,27 @@ Este trabajo tuvo múltiples objetivos: se buscó, por un lado, entender la prog
 
   La implementación de esta parte fue la que más tiempo y dificultad tuvo. En la especificación es pedido que el programa sea capaz de tratar solamente sentencias del tipo **cmd1 > file**, **cmd1 < file** ó **cmd1 | cmd2**; siendo parte del apartado extra el implementar la posibilidad de ejecutar algo que contenga los 4 delimitadores (&, |, < y >) en una misma línea. En esta implementación se intentó ir un poco más lejos y se logró el parseo y ejecución de líneas que contengan un número arbitrario de delimitadores (siempre que se respete una sintaxis primitiva), así como también se logró implementar un delimitador extra: **;**. El mismo sirve para separar, en una misma línea de comando, múltiples cadenas de ejecución. Esto permite que se ejecuten cosas de la forma **cmd1 | cmd2 | cmd3 > output ; cmd4 < input ; cmd5 | cmd6**.
   
+  Esto fue realizado en dos etapas: primero una de parseo, y luego una de ejecuciòn.
+  
+  La etapa de parseo consiste en parsear la línea completa de comandos, generando una linked list de *command_node*s. Esto es un struct que se creó, que contiene la siguiente información, necesaria luego para la ejecución de los programas correctamente:
+  ```C
+  typedef struct command {
+    char *command; // contiene el string con el comando a ejecutar, utilizado en invoke y en main para detectar comnados internos
+    char **argv; // lista de parámetros para el comando pasados por el usuario, usado en execv()
+    int argc; // cantidad de parámetros, no utilizado
+    int is_concurrent; // flag que indica si el programa debe ser ejecutado en segundo plano o no
+    int is_piped; // flag que indica si el programa lleva un pipe al programa siguiente en la lista
+    char *input; // nombre del archivo del cual tomar el input en la redirección, indicado con <
+    char *output; // nombre del archivo al cual mandar el output, indicado con >
+    
+    struct command *next; // puntero al siguiente comando a ejecutar
+  } command_node;
+  ```
+  Una vez leída la línea, y generada la lista de nodos, se procede a la etapa de ejecución.
+  
+  El algoritmo de esta parte fue tomado de https://www.cs.purdue.edu/homes/grr/SystemsProgrammingBook/Book/Chapter5-WritingYourOwnShell.pdf (pag. 13). Algunas modificaciones debieron ser realizadas para que funcionara con la lista de *command_node*s.
+  
+  Una explicación más a fondo de cómo funciona puede ser obtenida de las páginas siguientes del pdf.
 
 ## Conclusión
-//TODO: Escribir
+Este trabajo nos permitió no sólo trabajar más a fondo tanto con los conceptos vistos en clase, como con C; sino que también nos llevó, debido a la investigación que conllevó implementar el parseador deseado, a comprender mejor el funcionamiento de linux. Los conceptos de pipes y redirecciones, que habían quedado no del todo entendidos, fueron finalmente comprendidos.
