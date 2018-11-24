@@ -34,4 +34,5 @@ el cual recibe el mensaje ya encripado y nos devuelve el original.
 ```
 
 ## Conclusión
-La realización del trabajo nos permitió comprender el procedimiento a la hora de asignar memoria, tanto desde el punto de vista lógico (algorítmico) como desde el punto de vista de su implementación en C. A su vez, apreciamos la importancia del manejo de posibles errores y el tratado de los mismos, debido a que un error en éste tipo de programas puede ser fatal para el mismo.
+Habiendo hecho éste trabajo, pudimos tener una dimensión del funcionamiento/implementación de los modulos en linux, así como de los
+drivers del mismo. Pudimos también diferenciar el espacio kernel del espacio user, haciendo uso de funciones de ambos campos.
