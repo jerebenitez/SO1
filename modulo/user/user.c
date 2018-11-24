@@ -28,7 +28,7 @@ int main()
       return errno;
    }
 
-   printf("Ingrese la frase a encriptar:\n\n-> ");
+   printf("Ingrese la frase a encriptar ('exit' para salir):\n\n-> ");
 
    while(1)
     {
@@ -74,7 +74,7 @@ int main()
       }
       printf("El mensaje desencriptado es: %s\n", recieve);
       printf("\n=========================================================\n");
-      printf("\nPor favor ingrese otro mensaje:\n\n->");
+      printf("\nPor favor ingrese otro mensaje ('exit' para salir):\n\n->");
    }
 
    close(openE);
