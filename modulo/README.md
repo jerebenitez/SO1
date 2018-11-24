@@ -12,10 +12,10 @@ el cual recibe el mensaje ya encripado y nos devuelve el original.
 ## Instalación y uso del programa
 1. Descargar y extraer repositorio
 2. En consola, ir a modulo/encriptador y ejecutar:   
-
-**$ make
-**$ sudo insmod encriptador.ko
-
+```
+% make
+% sudo insmod encriptador.ko
+```
 3. En consola, ir a modulo/desencriptador y ejecutar:   make
                                                         sudo insmod desencriptador.ko
 4. En consola, ir a modulo/user y ejecutar:   make
